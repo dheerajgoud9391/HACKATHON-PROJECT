@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020617" />
+  <title>ExposureGuard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NOISE OVERLAY -->
+  <div class="noise"></div>
+
+  <!-- BACKGROUND ORBS -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- ═══════ TOPBAR ═══════ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">⬡</span>
+      <span class="brand-name">ExposureGuard</span>
+    </div>
+
+    <div class="scan-wrap">
+      <div class="input-shell">
+        <span class="input-prefix">→</span>
+        <input
+          id="domainInput"
+          type="text"
+          placeholder="domain.com or 192.168.1.1"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <button class="btn-scan" id="scanBtn" onclick="handleScan()">
+        <span class="btn-text">SCAN</span>
+        <span class="btn-glow"></span>
+      </button>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+      <span id="themeIcon">☀️</span>
+    </button>
+  </header>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main class="main" id="mainContent">
+
+    <!-- HERO (shown before scan) -->
+    <section class="hero" id="heroSection">
+      <div class="hero-label">EXPOSURE MONITORING</div>
+     <h1 class="hero-title">
+  Exposure detection and risk analysis.<br>
+  <span class="hero-accent">Monitor assets. Identify vulnerabilities.</span>
+</h1>
+      <p class="hero-sub">Enter a domain or IP address above to analyze open ports, threats, and exposure risk in seconds.</p>
+      <div class="hero-tags">
+        <span class="tag">Port Analysis</span>
+        <span class="tag">Threat Intel</span>
+        <span class="tag">Abuse Scoring</span>
+        <span class="tag">ISP Lookup</span>
+      </div>
+    </section>
+
+    <!-- ERROR BANNER -->
+    <div class="alert-banner error-banner" id="errorBanner" style="display:none"></div>
+
+    <!-- LOADING STATE -->
+    <div class="loading-state" id="loadingState" style="display:none">
+      <div class="loader-ring"></div>
+      <div class="loader-text">
+        <span class="loader-label">SCANNING</span>
+        <span class="loader-domain" id="loadingDomain"></span>
+      </div>
+      <div class="loader-steps">
+        <div class="lstep" id="lstep1">Port enumeration</div>
+        <div class="lstep" id="lstep2">Threat intelligence lookup</div>
+        <div class="lstep" id="lstep3">Abuse score analysis</div>
+        <div class="lstep" id="lstep4">Generating report</div>
+      </div>
+    </div>
+
+    <!-- ═══ RESULTS ═══ -->
+    <div class="results" id="results" style="display:none">
+
+      <!-- TOP GRID -->
+      <div class="top-grid">
+
+        <!-- SCORE CARD -->
+        <div class="card score-card" id="scoreCard">
+          <div class="card-eyebrow">RISK SCORE</div>
+          <div class="score-display">
+            <div class="score-ring-wrap">
+              <svg class="score-ring" viewBox="0 0 120 120">
+                <circle class="ring-bg" cx="60" cy="60" r="50"/>
+                <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
+              </svg>
+              <div class="score-number" id="scoreNumber">0</div>
+            </div>
+            <div class="score-meta">
+              <div class="risk-badge" id="riskBadge">—</div>
+              <div class="gauge-wrap">
+                <div class="gauge-track">
+                  <div class="gauge-bar" id="gaugeBar" style="width:0%"></div>
+                </div>
+                <div class="gauge-labels">
+                  <span>Low</span><span>Medium</span><span>High</span>
+                </div>
+              </div>
+              <div class="score-domain" id="scoreDomain"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="stats-col">
+          <div class="card stat-card" id="statPorts">
+            <div class="stat-icon red-icon">⬡</div>
+            <div class="stat-body">
+              <div class="stat-value red" id="statPortsVal">—</div>
+              <div class="stat-label">Open Ports</div>
+            </div>
+          </div>
+          <div class="card stat-card" id="statSuspicious">
+            <div class="stat-icon yellow-icon">◈</div>
+            <div class="stat-body">
+              <div class="stat-value yellow" id="statSuspiciousVal">—</div>
+              <div class="stat-label">Suspicious</div>
+            </div>
+          </div>
+          <div class="card stat-card" id="statAbuse">
+            <div class="stat-icon red-icon">◉</div>
+            <div class="stat-body">
+              <div class="stat-value red" id="statAbuseVal">—</div>
+              <div class="stat-label">Abuse Score</div>
+            </div>
+          </div>
+          <div class="card stat-card" id="statMalicious">
+            <div class="stat-icon red-icon">⚠</div>
+            <div class="stat-body">
+              <div class="stat-value red" id="statMaliciousVal">—</div>
+              <div class="stat-label">Malicious</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI VERDICT -->
+      <div class="ai-verdict" id="aiVerdict">
+        <div class="ai-chip">🤖 AI</div>
+        <div class="ai-text" id="aiText"></div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tab-bar">
+        <button class="tab active" data-tab="overview" onclick="switchTab('overview', this)">OVERVIEW</button>
+        <button class="tab" data-tab="technical" onclick="switchTab('technical', this)">TECHNICAL</button>
+        <button class="tab" data-tab="threats" onclick="switchTab('threats', this)">THREATS</button>
+      </div>
+
+      <!-- TAB PANELS -->
+      <div class="card tab-panel active" id="tab-overview">
+        <div class="panel-title">IP Intelligence</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-key">IP Address</span>
+            <span class="info-val mono" id="infoIp"></span>
+          </div>
+          <div class="info-item">
+            <span class="info-key">Location</span>
+            <span class="info-val" id="infoLocation"></span>
+          </div>
+          <div class="info-item">
+            <span class="info-key">ISP</span>
+            <span class="info-val" id="infoIsp"></span>
+          </div>
+          <div class="info-item">
+            <span class="info-key">Status</span>
+            <span class="info-val red" id="infoStatus"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card tab-panel" id="tab-technical" style="display:none">
+        <div class="panel-title">Open Ports & Services</div>
+        <div class="ports-list" id="portsList"></div>
+      </div>
+
+      <div class="card tab-panel" id="tab-threats" style="display:none">
+        <div class="panel-title">Threat Breakdown</div>
+        <div class="threat-bars" id="threatBars"></div>
+      </div>
+
+      <!-- ACCORDION ROW -->
+      <div class="accordion-row">
+
+        <!-- RISK BREAKDOWN -->
+        <div class="card accordion" id="accordBreakdown">
+          <div class="accordion-head" onclick="toggleAccordion('accordBreakdown')">
+            <span class="accordion-title">Risk Breakdown</span>
+            <span class="accordion-arrow">▾</span>
+          </div>
+          <div class="accordion-body" id="accordBreakdownBody">
+            <div class="breakdown-list">
+              <div class="breakdown-item">
+                <span class="breakdown-label">Open Ports</span>
+                <div class="breakdown-bar"><div class="breakdown-fill red-fill" style="width:40%"></div></div>
+                <span class="breakdown-score red">+40</span>
+              </div>
+              <div class="breakdown-item">
+                <span class="breakdown-label">No HTTPS</span>
+                <div class="breakdown-bar"><div class="breakdown-fill orange-fill" style="width:30%"></div></div>
+                <span class="breakdown-score yellow">+30</span>
+              </div>
+              <div class="breakdown-item">
+                <span class="breakdown-label">Data Leak</span>
+                <div class="breakdown-bar"><div class="breakdown-fill yellow-fill" style="width:20%"></div></div>
+                <span class="breakdown-score yellow">+20</span>
+              </div>
+              <div class="breakdown-item">
+                <span class="breakdown-label">Outdated Services</span>
+                <div class="breakdown-bar"><div class="breakdown-fill gray-fill" style="width:10%"></div></div>
+                <span class="breakdown-score muted">+10</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUGGESTIONS -->
+        <div class="card accordion" id="accordSuggestions">
+          <div class="accordion-head" onclick="toggleAccordion('accordSuggestions')">
+            <span class="accordion-title">Recommendations</span>
+            <span class="accordion-arrow">▾</span>
+          </div>
+          <div class="accordion-body" id="accordSuggestionsBody">
+            <div class="suggest-grid">
+              <div class="sug-card">
+                <div class="sug-icon">🔒</div>
+                <div>
+                  <div class="sug-title">Close Unused Ports</div>
+                  <div class="sug-desc">Reduce attack surface by closing ports 22, 3306</div>
+                </div>
+              </div>
+              <div class="sug-card">
+                <div class="sug-icon">🔐</div>
+                <div>
+                  <div class="sug-title">Enable HTTPS</div>
+                  <div class="sug-desc">Force TLS on all endpoints immediately</div>
+                </div>
+              </div>
+              <div class="sug-card">
+                <div class="sug-icon">🛡</div>
+                <div>
+                  <div class="sug-title">Restrict SSH Access</div>
+                  <div class="sug-desc">Whitelist IPs and disable password auth</div>
+                </div>
+              </div>
+              <div class="sug-card">
+                <div class="sug-icon">🚫</div>
+                <div>
+                  <div class="sug-title">Block Suspicious IPs</div>
+                  <div class="sug-desc">Add flagged IPs to firewall blocklist</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- HISTORY -->
+      <div class="card" id="historyCard">
+        <div class="panel-title">Scan History</div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">No previous scans this session.</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /results -->
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
